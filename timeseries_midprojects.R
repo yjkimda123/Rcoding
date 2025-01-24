@@ -1,0 +1,52 @@
+dat1 = read.table("timeseries_midterm dataset9.txt", header = T)
+names(dat1)
+names(dat1) = c('yr', 'gdp', 'coal', 'gas', 'pet', 'nuclear', 'geo',
+                'solar', 'wind', 'hydro')
+ts = lm(gdp ~ coal + gas + pet + nuclear+ geo + solar + wind + hydro, data = dat1)
+summary(ts)
+null = lm(gdp ~ 1, data = dat1)
+full = lm(gdp ~ coal + gas + pet + nuclear+ geo + solar + wind + hydro, data = dat1)
+step(null, scope = list(lower = null, upper = full), direction = "forward")
+step(full, data = dat1, direction = "backward")
+step(null, scope = list(upper = full), direction = "both")
+
+ts2 = lm(gdp ~ nuclear + pet + geo + solar, data = dat1)
+vif(ts2)
+summary(ts2)
+install.packages("lmtest")
+library(lmtest)
+bptest(ts2)
+dwtest(ts2)
+res <- residuals(ts2)
+shapiro.test(res)
+
+plot(fitted(ts2), residuals(ts2), xlab = "fitted", ylab = "residuals")
+abline(0,0)
+qqnorm(residuals(ts2), ylab = "residuals")
+qqline(residuals(ts2))
+
+
+weights <- 1/fitted(lm(abs(residuals(ts2)) ~ fitted(ts2)))^2
+wls_model <- lm(gdp ~ nuclear + pet + solar, data = dat1, weights=weights)
+summary(wls_model)
+summary(ts2)
+bptest(wls_model)
+dwtest(wls_model)
+res2 <- residuals(wls_model)
+shapiro.test(res2)
+plot(fitted(wls_model), residuals(wls_model), xlab = "fitted", ylab = "residuals")
+abline(0,0)
+qqnorm(residuals(wls_model), ylab = "residuals")
+qqline(residuals(wls_model))
+pairs(dat1)
+
+
+ts2inf = influence(ts2)
+ts2inf$hat
+plot(ts2inf$hat)
+r1 = rstudent(ts2)
+plot(r1)
+cout2 = cooks.distance(ts2)
+plot(cout2)
+par(mfrow = c(1,1))
+plot(bptest(ts2))
